@@ -1,27 +1,33 @@
 import cv2
 import numpy as np
+from PIL import Image
 
 __all__ = ["ContourParser"]
 
 
 class ContourParser:
-    def __init__(self, image):
-        if hasattr(image, "size") and image.size == 0:
+    def __init__(self, path: str) -> None:
+        self.image = self.parse_img_from_path(path)
+
+        if hasattr(self.image, "size") and self.image.size == 0:
             raise ValueError(
-                f"The image of type {image.__class__.__name__} \
+                f"The image of type {self.image.__class__.__name__} \
                 is empty. Expected 'np.ndarray' object."
             )
-        if image is None:
-            raise ValueError("The image passed in 'NoneType'")
-        self.image = image
+        if self.image is None:
+            raise ValueError("The image passed is 'NoneType'")
 
     def apply_threshold(self):
         grey = cv2.cvtColor(self.image.copy(), cv2.COLOR_BGR2GRAY)
 
-        ret, threshhold = cv2.threshold(
-            grey.copy(), 75, 255, cv2.THRESH_BINARY_INV)
+        ret, threshhold = cv2.threshold(grey.copy(), 75, 255, cv2.THRESH_BINARY_INV)
 
         return threshhold
+
+    def parse_img_from_path(self, path: str) -> np.ndarray:
+        image = Image.open(path).convert("L")
+        image_array = np.asarray(image)
+        return image_array
 
     def find_contours(self):
         thresh = self.apply_threshold()
@@ -50,7 +56,7 @@ class ContourParser:
                 in the for loop
             """
 
-            digit = thresh[y: y + h, x: x + w]
+            digit = thresh[y : y + h, x : x + w]
 
             # Resizing that digit to (18, 18)
             resized_digit = cv2.resize(digit, (18, 18))
